@@ -149,11 +149,7 @@ public class MethodDocumentation : DocumentationElement
     /// <param name="path">Path to the output file.</param>
     public static void Serialize(List<MethodDocumentation> elements, string path)
     {
-        string jsonStr = JsonSerializer.Serialize(
-            elements,
-            new JsonSerializerOptions { WriteIndented = true });
-        
-        File.WriteAllText(path, jsonStr);
+        SerializeToFile(elements, path);
     }
 
     /// <summary>
@@ -163,7 +159,6 @@ public class MethodDocumentation : DocumentationElement
     /// <returns>A list with all the deserialized elements.</returns>
     public static List<MethodDocumentation> Deserialize(string path)
     {
-        return Deserialize<MethodDocumentation>(
-            File.ReadAllText(path));
+        return DeserializeFromFile<MethodDocumentation>(path);
     }
 }
