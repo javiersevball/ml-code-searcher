@@ -15,6 +15,7 @@
 
 using System.CommandLine;
 using CodeCommentExtractor;
+using MlCodeSearcherModelBuilder;
 
 namespace CodeCommentAnalyzer;
 
@@ -22,7 +23,7 @@ public class Program
 {
     public static async Task<int> Main(string[] args)
     {
-        // Command line parser - Extract options
+        // Extract options
         var inputPattern = new Option<string>(
             "--inputPattern",
             "The input path pattern to scan for C# source files.")
@@ -50,9 +51,32 @@ public class Program
             inputPattern,
             outputFile);
 
+        // Build model options
+        var inputCodeCommentsFile = new Option<string>(
+            "--inputFile",
+            "Path to the JSON file that will be the input for the ML.NET pipeline.")
+            {
+                IsRequired = true
+            };
+
+        var buildModelCommand = new Command(
+            "buildmodel",
+            "Generates the ML.NET model needed by the app.")
+            {
+                inputCodeCommentsFile
+            };
+        
+        buildModelCommand.SetHandler((input) =>
+            {
+                BuildModel(input);
+            },
+            inputCodeCommentsFile);
+
+        // Root options
         var root = new RootCommand("ML code searcher.")
             {
-                extractCommand
+                extractCommand,
+                buildModelCommand
             };
         
         return await root.InvokeAsync(args);
@@ -68,5 +92,15 @@ public class Program
         // TODO: show command line menu to select extractor
         var extractor = CodeCommentExtractorHelper.GetAvailableExtractors().First();
         extractor.ExtractMethodComments(inputPattern, outputFile);
+    }
+
+    /// <summary>
+    /// Method that implements the "Build model" command behaviour.
+    /// </summary>
+    /// <param name="inputCodeCommentsFile">Path to the JSON file that will be
+    /// the input for the ML.NET pipeline.</param>
+    private static void BuildModel(string inputCodeCommentsFile)
+    {
+        ModelBuilder.GenerateModel(inputCodeCommentsFile);
     }
 }

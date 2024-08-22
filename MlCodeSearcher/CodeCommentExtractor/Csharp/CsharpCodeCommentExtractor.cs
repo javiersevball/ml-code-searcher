@@ -142,7 +142,7 @@ public class CsharpCodeCommentExtractor : ICodeCommentExtractor
         doc.Comment = xmlDoc.Root.Element("summary").Value.Trim();
 
         // Method return info
-        doc.Returns = [];
+        List<MethodReturn> docReturns = [];
 
         if (xmlDoc.Root.Element("returns") != null)
         {
@@ -152,11 +152,14 @@ public class CsharpCodeCommentExtractor : ICodeCommentExtractor
                     Type = returnType,
                     Comment = returnComment
                 };
-            doc.Returns.Add(methodReturn);
+            
+            docReturns.Add(methodReturn);
         }
 
+        doc.Returns = MethodReturn.Serialize(docReturns);
+
         // Input parameters info
-        doc.Parameters = [];
+        List<MethodParameter> docParameters = [];
 
         if (parameters.Count > 0)
         {
@@ -174,10 +177,12 @@ public class CsharpCodeCommentExtractor : ICodeCommentExtractor
                             Comment = inputParamDoc.Value.Trim()
                         };
 
-                    doc.Parameters.Add(methodParameter);
+                    docParameters.Add(methodParameter);
                 }
-            }
+            }            
         }
+
+        doc.Parameters = MethodParameter.Serialize(docParameters);
 
         return doc;
     }
