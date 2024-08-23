@@ -13,21 +13,26 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with ML Code Searcher. If not, see <https://www.gnu.org/licenses/>.
 
+using System.Collections.Immutable;
 using CodeCommentExtractor;
 
-namespace MlCodeSearcherModelBuilder;
+namespace MlCodeSearcherModel;
 
 /// <summary>
-/// TODO - refactor class?
+/// Helper class for the management of the ML.NET model.
 /// </summary>
-public static class ModelBuilder
+public static class MlCodeSearcherModelHelper
 {
-    public static void GenerateModel(string inputCodeCommentsFile)
+    public static IEnumerable<(MethodDocumentation MethodDoc, double Similarity)> SearchForFunctionality(
+        string inputCodeCommentsFile, string userInput)
     {
         // Read input file
         var methodDocData = MethodDocumentation.Deserialize(
             inputCodeCommentsFile);
+            
+        var model = new MlCodeSearcherModel(methodDocData);
 
-        var pipeline = new MlCodeSearcherPipeline(methodDocData);
+        return model.CalculateSimilarities(userInput).OrderByDescending(
+            x => x.Similarity);
     }
 }

@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MlCodeSearcher", "MlCodeSea
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodeCommentExtractor", "CodeCommentExtractor\CodeCommentExtractor.csproj", "{E94E89D7-400F-4BCA-A0DC-6CAA3C3041FD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MlCodeSearcherModelBuilder", "MlCodeSearcherModelBuilder\MlCodeSearcherModelBuilder.csproj", "{E78CFA97-3766-4A65-98AD-921B68957688}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MlCodeSearcherModel", "MlCodeSearcherModel\MlCodeSearcherModel.csproj", "{E78CFA97-3766-4A65-98AD-921B68957688}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

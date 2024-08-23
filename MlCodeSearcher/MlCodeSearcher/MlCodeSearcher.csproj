@@ -2,7 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CodeCommentExtractor\CodeCommentExtractor.csproj" />
-    <ProjectReference Include="..\MlCodeSearcherModelBuilder\MlCodeSearcherModelBuilder.csproj" />
+    <ProjectReference Include="..\MlCodeSearcherModel\MlCodeSearcherModel.csproj" />
   </ItemGroup>
 
   <ItemGroup>

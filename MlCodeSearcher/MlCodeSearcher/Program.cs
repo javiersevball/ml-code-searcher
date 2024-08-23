@@ -15,7 +15,7 @@
 
 using System.CommandLine;
 using CodeCommentExtractor;
-using MlCodeSearcherModelBuilder;
+using MlCodeSearcherModel;
 
 namespace CodeCommentAnalyzer;
 
@@ -23,25 +23,34 @@ public class Program
 {
     public static async Task<int> Main(string[] args)
     {
-        // Extract options
+        // Options
         var inputPattern = new Option<string>(
             "--inputPattern",
             "The input path pattern to scan for C# source files.")
             {
                 IsRequired = true
             };
-        var outputFile = new Option<string>(
-            "--outputFile",
-            "The output file path for the extracted documentation.")
+        var methodDocFilePath = new Option<string>(
+            "--methodDocFilePath",
+            "Path to the method documentation file.")
             {
                 IsRequired = true
             };
+        var request = new Option<string>(
+            "--request",
+            "The input description that will be used to determine if the" +
+            "functionality is already implemented.")
+            {
+                IsRequired = true
+            };
+
+        // Extract command
         var extractCommand = new Command(
             "extract",
             "Extracts documentation from C# source files.")
             {
                 inputPattern,
-                outputFile
+                methodDocFilePath
             };
         
         extractCommand.SetHandler((input, output) =>
@@ -49,34 +58,29 @@ public class Program
                 ExtractCodeComments(input, output);
             },
             inputPattern,
-            outputFile);
-
-        // Build model options
-        var inputCodeCommentsFile = new Option<string>(
-            "--inputFile",
-            "Path to the JSON file that will be the input for the ML.NET pipeline.")
+            methodDocFilePath);
+        
+        // Search command
+        var searchCommand = new Command(
+            "search",
+            "Searchs if a functionality is already implemented.")
             {
-                IsRequired = true
-            };
-
-        var buildModelCommand = new Command(
-            "buildmodel",
-            "Generates the ML.NET model needed by the app.")
-            {
-                inputCodeCommentsFile
+                methodDocFilePath,
+                request
             };
         
-        buildModelCommand.SetHandler((input) =>
+        searchCommand.SetHandler((path, userInput) =>
             {
-                BuildModel(input);
+                ExecuteSearch(path, userInput);
             },
-            inputCodeCommentsFile);
+            methodDocFilePath,
+            request);
 
         // Root options
         var root = new RootCommand("ML code searcher.")
             {
                 extractCommand,
-                buildModelCommand
+                searchCommand
             };
         
         return await root.InvokeAsync(args);
@@ -95,12 +99,22 @@ public class Program
     }
 
     /// <summary>
-    /// Method that implements the "Build model" command behaviour.
+    /// Method that implements the "Search" command behaviour.
     /// </summary>
-    /// <param name="inputCodeCommentsFile">Path to the JSON file that will be
-    /// the input for the ML.NET pipeline.</param>
-    private static void BuildModel(string inputCodeCommentsFile)
+    /// <param name="path">Path to the JSON file that will be the input
+    /// for the ML.NET pipeline.</param>
+    /// <param name="userInput">The user input description.</param>
+    private static void ExecuteSearch(
+        string path, string userInput)
     {
-        ModelBuilder.GenerateModel(inputCodeCommentsFile);
+        var result = MlCodeSearcherModelHelper.SearchForFunctionality(path, userInput);
+
+        // TODO
+        foreach (var x in result)
+        {
+            Console.WriteLine("------------------------------------------------");
+            Console.WriteLine($"Method name: {x.MethodDoc.Name}");
+            Console.WriteLine($"Similarity: {x.Similarity}");
+        }
     }
 }
