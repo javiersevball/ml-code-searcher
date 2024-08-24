@@ -13,7 +13,6 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with ML Code Searcher. If not, see <https://www.gnu.org/licenses/>.
 
-using System.Collections.Immutable;
 using CodeCommentExtractor;
 
 namespace MlCodeSearcherModel;
@@ -23,16 +22,39 @@ namespace MlCodeSearcherModel;
 /// </summary>
 public static class MlCodeSearcherModelHelper
 {
-    public static IEnumerable<(MethodDocumentation MethodDoc, double Similarity)> SearchForFunctionality(
-        string inputCodeCommentsFile, string userInput)
+    /// <summary>
+    /// Field that contains the model in use.
+    /// </summary>
+    private static MlCodeSearcherModel _model = null;
+
+    /// <summary>
+    /// Initializes the model with the method documentation data of the
+    /// input file.
+    /// </summary>
+    /// <param name="inputCodeCommentsFile">Path to the JSON file that contains
+    /// all the input data for the model.</param>
+    public static void InitializeModel(string inputCodeCommentsFile)
     {
-        // Read input file
         var methodDocData = MethodDocumentation.Deserialize(
             inputCodeCommentsFile);
-            
-        var model = new MlCodeSearcherModel(methodDocData);
+        
+        _model = new MlCodeSearcherModel(methodDocData);
+    }
 
-        return model.CalculateSimilarities(userInput).OrderByDescending(
-            x => x.Similarity);
+    /// <summary>
+    /// Method that gets the similarities between the user input and the code
+    /// comments that describe the functionalities already implemented.
+    /// </summary>
+    /// <param name="userInput">The user input description.</param>
+    /// <returns>The list of methods and its similarity with the user input.</returns>
+    public static IEnumerable<(MethodDocumentation MethodDoc, double Similarity)> GetSimilarities(
+        string userInput)
+    {
+        if (_model == null)
+        {
+            throw new Exception("Application model not initialized.");
+        }
+
+        return _model.CalculateSimilarities(userInput);
     }
 }

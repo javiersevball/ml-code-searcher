@@ -39,7 +39,10 @@ public class Program
         var request = new Option<string>(
             "--request",
             "The input description that will be used to determine if the" +
-            "functionality is already implemented.")
+            "functionality is already implemented.");
+        var numberOfResults = new Option<int>(
+            "--numberOfResults",
+            "Number of results to show.")
             {
                 IsRequired = true
             };
@@ -66,15 +69,17 @@ public class Program
             "Searchs if a functionality is already implemented.")
             {
                 methodDocFilePath,
-                request
+                request,
+                numberOfResults
             };
         
-        searchCommand.SetHandler((path, userInput) =>
+        searchCommand.SetHandler((path, userInput, number) =>
             {
-                ExecuteSearch(path, userInput);
+                ExecuteSearch(path, userInput, number);
             },
             methodDocFilePath,
-            request);
+            request,
+            numberOfResults);
 
         // Root options
         var root = new RootCommand("ML code searcher.")
@@ -93,9 +98,29 @@ public class Program
     /// <param name="outputFile">Path to the output file.</param>
     private static void ExtractCodeComments(string inputPattern, string outputFile)
     {
-        // TODO: show command line menu to select extractor
-        var extractor = CodeCommentExtractorHelper.GetAvailableExtractors().First();
-        extractor.ExtractMethodComments(inputPattern, outputFile);
+        int selected = -1;
+        var extractors = CodeCommentExtractorHelper.GetAvailableExtractors();
+
+        // Select code comment extractor
+        Console.WriteLine("--- Available extractors:");
+
+        for (int i = 0; i < extractors.Count; i++)
+        {
+            Console.WriteLine($"[{i}] - {extractors[i].ExtractorName}");
+        }
+
+        Console.Write("\nSelect extractor: ");
+        
+        if (!int.TryParse(Console.ReadLine(), out selected) ||
+            selected < 0 ||
+            selected > extractors.Count - 1)
+        {
+            throw new Exception("Extractor selection - Invalid option.");
+        }
+
+        Console.WriteLine("Extracting method comments to file...");
+        extractors[selected].ExtractMethodComments(inputPattern, outputFile);
+        Console.WriteLine("Done.");
     }
 
     /// <summary>
@@ -104,17 +129,77 @@ public class Program
     /// <param name="path">Path to the JSON file that will be the input
     /// for the ML.NET pipeline.</param>
     /// <param name="userInput">The user input description.</param>
+    /// <param name="numberOfResults">Number of results to show.</param>
     private static void ExecuteSearch(
-        string path, string userInput)
+        string path, string userInput, int numberOfResults)
     {
-        var result = MlCodeSearcherModelHelper.SearchForFunctionality(path, userInput);
+        Console.WriteLine("Initializing model...");
+        MlCodeSearcherModelHelper.InitializeModel(path);
+        Console.WriteLine("Done.\n");
 
-        // TODO
-        foreach (var x in result)
+        if (!string.IsNullOrEmpty(userInput))
         {
-            Console.WriteLine("------------------------------------------------");
-            Console.WriteLine($"Method name: {x.MethodDoc.Name}");
-            Console.WriteLine($"Similarity: {x.Similarity}");
+            var similarities = MlCodeSearcherModelHelper.GetSimilarities(userInput);
+            PrintUserInputSimilarities(similarities, numberOfResults);
         }
+        else
+        {
+            // TODO
+            throw new NotImplementedException();
+        }
+    }
+
+    /// <summary>
+    /// Method that prints in console the similarities results when searching
+    /// for functionality.
+    /// </summary>
+    /// <param name="similarities">The similarities results returned from model.</param>
+    /// <param name="numberOfResults">Number of results to show.</param>
+    private static void PrintUserInputSimilarities(
+        IEnumerable<(MethodDocumentation MethodDoc, double Similarity)> similarities,
+        int numberOfResults)
+    {
+        var validSimilarities = similarities.Where(x => x.Similarity > 0);
+        var results = validSimilarities.OrderByDescending(
+            x => x.Similarity).Take(numberOfResults).ToList();
+
+        for (int i = 0; i < results.Count; i++)
+        {
+            Console.Write($"--- Result #{i} - ");
+            PrintSimilarityResultEvaluation(results[i].Similarity);
+            Console.WriteLine();
+            Console.WriteLine($"Similarity: {results[i].Similarity}");
+            Console.WriteLine(results[i].MethodDoc);
+        }
+    }
+
+    /// <summary>
+    /// Method that prints the similarity result evaluation from very high to low.
+    /// </summary>
+    /// <param name="similarity">The similarity result.</param>
+    private static void PrintSimilarityResultEvaluation(double similarity)
+    {
+        if (similarity > 0.9)
+        {
+            Console.ForegroundColor = ConsoleColor.DarkGreen;
+            Console.Write("VERY HIGH similarity");
+        }
+        else if (similarity > 0.7)
+        {
+            Console.ForegroundColor = ConsoleColor.DarkGreen;
+            Console.WriteLine("HIGH similarity");
+        }
+        else if (similarity > 0.5)
+        {
+            Console.ForegroundColor = ConsoleColor.DarkYellow;
+            Console.WriteLine("MODERATE similarity");
+        }
+        else
+        {
+            Console.ForegroundColor = ConsoleColor.DarkRed;
+            Console.WriteLine("LOW similarity");
+        }
+
+        Console.ResetColor();
     }
 }
