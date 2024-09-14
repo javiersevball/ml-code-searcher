@@ -139,13 +139,29 @@ public class Program
 
         if (!string.IsNullOrEmpty(userInput))
         {
-            var similarities = MlCodeSearcherModelHelper.GetSimilarities(userInput);
-            PrintUserInputSimilarities(similarities, numberOfResults);
+            PrintUserInputSimilarities(
+                MlCodeSearcherModelHelper.GetSimilarities(userInput),
+                numberOfResults);
         }
         else
         {
-            // TODO
-            throw new NotImplementedException();
+            do
+            {
+                Console.Write("\n--- User input: ");
+                var input = Console.ReadLine();
+
+                if (!string.IsNullOrEmpty(input))
+                {
+                    PrintUserInputSimilarities(
+                        MlCodeSearcherModelHelper.GetSimilarities(input),
+                        numberOfResults);
+                }
+
+                Console.Write("'c' to continue, any other key to exit: ");
+            }
+            while (Console.ReadKey().KeyChar == 'c');
+
+            Console.WriteLine();
         }
     }
 
